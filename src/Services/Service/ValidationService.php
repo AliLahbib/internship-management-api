@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Service;
+namespace App\Services\Service;
 
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ValidationService
 {

@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Company;
 use App\Entity\InternshipRequest;
-use App\Service\ValidationService;
+use App\Services\Service\ValidationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;

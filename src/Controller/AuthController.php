@@ -43,19 +43,25 @@ class AuthController extends AbstractController
             'message' => 'Registered Successfully'
         ], Response::HTTP_CREATED);
     }
-
-    #[Route('/login', name: 'api_login', methods: ['POST'])]
-    public function login(#[CurrentUser] ?User $user): JsonResponse
+    #[Route('/user', name: 'api_user', methods: ['GET'])]
+    public function getUserData(): JsonResponse
     {
-        if (null === $user) {
+        $user = $this->getUser(); // Symfony récupère l'utilisateur
+
+        if (!$user) {
             return $this->json([
-                'message' => 'missing credentials',
+                'message' => 'Utilisateur non authentifié',
             ], Response::HTTP_UNAUTHORIZED);
         }
 
         return $this->json([
-            'user' => $user->getUserIdentifier(),
+            'id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'firstName' => $user->getFirstName(),
+            'lastName' => $user->getLastName(),
             'roles' => $user->getRoles(),
         ]);
     }
+
+
 } 
