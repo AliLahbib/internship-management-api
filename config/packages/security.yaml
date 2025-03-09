@@ -11,6 +11,7 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            stateless: true
             form_login:
                 check_path: /api/login
                 username_parameter: email
@@ -23,10 +24,11 @@ security:
                 secret: '%kernel.secret%'
                 lifetime: 604800 # 7 jours
                 path: /
-            stateless: false
+
+#            session: false
 
 
     access_control:
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/logout, roles: PUBLIC_ACCESS }
-        - { path: ^/api/, roles: IS_AUTHENTICATED_FULLY }
+#        - { path: ^/api/, roles: IS_AUTHENTICATED_FULLY }

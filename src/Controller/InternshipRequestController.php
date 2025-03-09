@@ -21,7 +21,7 @@ class InternshipRequestController extends AbstractController
     ) {}
 
     #[Route('', name: 'create_request', methods: ['POST'])]
-    #[IsGranted('ROLE_STUDENT')]
+//    #[IsGranted('ROLE_STUDENT')]
     public function create(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
@@ -35,7 +35,7 @@ class InternshipRequestController extends AbstractController
             $internshipRequest->setDepartment($data['department']);
             $internshipRequest->setCompany($data['company_id'] ? $entityManager->getReference(Company::class, $data['company_id']) : null);
 
-            $this->validationService->validate($internshipRequest);
+//            $this->validationService->validate($internshipRequest);
 
             $entityManager->persist($internshipRequest);
             $entityManager->flush();

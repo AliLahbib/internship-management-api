@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Entity\Admin;
+use App\Entity\Student;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use  Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -9,9 +11,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class UserServices
 {
-    private $entityManager;
-    private $passwordEncoder;
-    private $validator;
+    private EntityManagerInterface $entityManager;
+    private UserPasswordHasherInterface $passwordEncoder;
+    private ValidatorInterface $validator;
 
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -44,19 +46,26 @@ class UserServices
      */
     public function createUser(array $data): ?User
     {
-        $user = new User();
+
+        if ($data['type'] === 'student') {
+            $user = new Student();
+            $user->setProgram($data["program"]??null);
+            $user->setStudyYear($data["studyYear"]??null);
+            $user->setIdentityCardNumber($data["identity_card_number"] ?? null);
+        } elseif ($data['type'] === 'admin') {
+            $user = new Admin();
+            $user->setDepartment($data['department'] ?? null);
+        }
+
         $user->setEmail($data['email'] ?? null);
-        $user->setPassword($this->passwordEncoder->encodePassword($user, $data['password'] ?? ''));
+        $user->setPassword($this->passwordEncoder->hashPassword($user, $data['password'] ?? ''));
+
+
         $user->setFirstName($data['firstName'] ?? null);
         $user->setLastName($data['lastName'] ?? null);
         $user->setPhone($data['phone'] ?? null);
         $user->setRoles($data['roles'] ?? []);
 
-        // Valider les données
-        $errors = $this->validator->validate($user);
-        if (count($errors) > 0) {
-            throw new \InvalidArgumentException($this->formatValidationErrors($errors));
-        }
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
@@ -64,25 +73,59 @@ class UserServices
         return $user;
     }
 
+    public function deleteUserById(int $id): void
+    {
+        $user = $this->getUserById($id);
+
+        if (!$user) {
+            throw new \InvalidArgumentException("Utilisateur non trouvé.");
+        }
+
+        $this->deleteUser($user);
+    }
+
     /**
      * Mettre à jour un utilisateur
      */
-    public function updateUser(User $user, array $data): ?User
+    public function updateUser(int $id, array $data): ?User
     {
-        $user->setEmail($data['email'] ?? $user->getEmail());
-        if (!empty($data['password'])) {
-            $user->setPassword($this->passwordEncoder->encodePassword($user, $data['password']));
-        }
-        $user->setFirstName($data['firstName'] ?? $user->getFirstName());
-        $user->setLastName($data['lastName'] ?? $user->getLastName());
-        $user->setPhone($data['phone'] ?? $user->getPhone());
-        $user->setRoles($data['roles'] ?? $user->getRoles());
+        $user = $this->getUserById($id);
 
-        // Valider les données
-        $errors = $this->validator->validate($user);
-        if (count($errors) > 0) {
-            throw new \InvalidArgumentException($this->formatValidationErrors($errors));
+        if (!$user) {
+            throw new \InvalidArgumentException("Utilisateur non trouvé.");
         }
+
+        if (isset($data['email'])) {
+            $user->setEmail($data['email']);
+        }
+
+        if (!empty($data['password'])) {
+            $user->setPassword($this->passwordEncoder->hashPassword($user, $data['password']));
+        }
+
+        if (isset($data['firstName'])) {
+            $user->setFirstName($data['firstName']);
+        }
+
+        if (isset($data['lastName'])) {
+            $user->setLastName($data['lastName']);
+        }
+
+        if (isset($data['phone'])) {
+            $user->setPhone($data['phone']);
+        }
+
+        if (isset($data['roles'])) {
+            $user->setRoles($data['roles']);
+        }
+
+
+        if ($user instanceof Admin && isset($data['department'])) {
+            $user->setDepartment($data['department']);
+        }
+
+//        // Validation des données
+//        $this->validateUser($user);
 
         $this->entityManager->flush();
 

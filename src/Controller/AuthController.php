@@ -32,7 +32,7 @@ class AuthController extends AbstractController
         $student->setFirstName($data['firstName']);
         $student->setLastName($data['lastName']);
         $student->setPhone($data['phone']);
-        $student->setIdentityCardNumber($data['identityCardNumber']);
+        $student->setIdentityCardNumber($data['identity_card_number']);
         $student->setProgram($data['program']);
         $student->setStudyYear($data['studyYear']);
 

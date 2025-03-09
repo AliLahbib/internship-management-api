@@ -24,6 +24,9 @@ class SecurityController extends AbstractController
     #[Route('/api/login', name: 'api_login', methods: ['POST'])]
     public function login(UserInterface $user): JsonResponse
     {
+        if (!$user) {
+            return $this->json(['error' => '❌ Identifiants incorrects'], JsonResponse::HTTP_UNAUTHORIZED);
+        }
         return $this->json([
             'message' => '✅ Authentification réussie',
             'email' => $user->getUserIdentifier(),

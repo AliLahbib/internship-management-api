@@ -11,7 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ApiResource]
 class Student extends User
 {
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length: 255, unique: true,nullable: true)]
     private ?string $identityCardNumber = null;
 
     #[ORM\Column(length: 50)]

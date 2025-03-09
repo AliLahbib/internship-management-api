@@ -4,55 +4,88 @@ namespace App\Controller;
 
 use App\Entity\Admin;
 use App\Entity\InternshipRequest;
+use App\Services\UserServices;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 #[Route('/api/admin')]
 class AdminController extends AbstractController
 {
+    private UserServices  $userServices;
+
+    private EntityManagerInterface $entityManager;
+
+    public function __construct(UserServices $userServices,EntityManagerInterface $entityManager)
+    {
+        $this->userServices = $userServices;
+
+        $this->entityManager = $entityManager;
+    }
 
 
     #[Route('', name: 'admin_list', methods: ['GET'])]
     public function list(): JsonResponse
     {
-        $admins = $this->getDoctrine()->getRepository(Admin::class)->findAll();
-        $data = $this->serializer->serialize($admins, 'json', ['groups' => 'user:read']);
-        return new JsonResponse($data, 200, [], true);
+        $admins = $this->entityManager->getRepository(Admin::class)->findAll();
+
+        $data=$this->json($admins);
+        return $data;
     }
+
 
     #[Route('/{id}', name: 'admin_by_id', methods: ['GET'])]
 
     public function get(int $id): JsonResponse
     {
-        $admin = $this->getDoctrine()->getRepository(Admin::class)->find($id);
+        $admin = $this->entityManager->getRepository(Admin::class)->find($id);
 
         if (!$admin) {
             return new JsonResponse(['message' => 'Admin not found'], 404);
         }
 
-        $data = $this->serializer->serialize($admin, 'json', ['groups' => 'user:read']);
-        return new JsonResponse($data, 200, [], true);
+       return $this->json($admin);
     }
 
     #[Route('', name: 'create_admin', methods: ['POST'])]
-    public function create(Request $request): JsonResponse
+    public function create(Request $request,UserPasswordHasherInterface $passwordHasher): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $data['type'] = 'admin';
+
+        try {
+            $createdAdmin = $this->userServices->createUser($data); // Utilisation correcte du service
+            return $this->json($createdAdmin);
+        } catch (\InvalidArgumentException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    #[Route('/{id}', name: 'update_admin', methods: ['PUT', 'PATCH'])]
+    public function updateAdmin(int $id, Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
-        // Initialiser un nouvel administrateur
-        $admin = new Admin();
-        $admin->setEmail($data['email'] ?? null);
-        $admin->setDepartment($data['department'] ?? null);
-
         try {
-            $createdAdmin = $this->userService->createUser($data); // Utilise le service générique
-            $responseData = $this->serializer->serialize($createdAdmin, 'json', ['groups' => 'user:read']);
-            return new JsonResponse($responseData, 201, [], true);
+            $updatedAdmin = $this->userServices->updateUser($id, $data);
+            return $this->json($updatedAdmin, 200);
         } catch (\InvalidArgumentException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    #[Route('/{id}', name: 'delete_admin', methods: ['DELETE'])]
+    public function deleteAdmin(int $id): JsonResponse
+    {
+        try {
+            $this->userServices->deleteUserById($id);
+            return new JsonResponse(['message' => 'Admin deleted successfully'], 200);
+        } catch (\InvalidArgumentException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
         }
     }
 
